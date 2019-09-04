@@ -1,4 +1,4 @@
-    package org.cloudera.com.spark_compaction;
+package org.cloudera.com.spark_compaction;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,11 +12,13 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.SparkSession;
 
 public class Compact {
 
@@ -51,7 +53,7 @@ public class Compact {
     private static final double TEXT_RATIO = 1.0;
 
     private static Options options;
-    
+
     private HashMap<String, Double> compression_ratios;
 
     public Compact() {
@@ -112,11 +114,11 @@ public class Compact {
         Path hdfsPath = new Path(inputPath);
         FileStatus[] fsArray = fs.globStatus(hdfsPath);
         long fileSize = 0;
-        
+
         for (FileStatus fileStatus : fsArray) {
-        	fileSize += fs.getContentSummary(fileStatus.getPath()).getSpaceConsumed();
+            fileSize += fs.getContentSummary(fileStatus.getPath()).getSpaceConsumed();
         }
-        
+
         return (long) (fileSize * splitRatio(inputCompression, inputSerialization));
     }
 
@@ -126,23 +128,45 @@ public class Compact {
         double defaultBlockSize = new Long(fs.getDefaultBlockSize(targetPath)).doubleValue();
         return (int) (Math.floor(((inputSizeDouble / splitRatio) / defaultBlockSize)) + 1.0);
     }
-    
+
     public String makeInputPath(FileSystem fs, String inputPath) throws IOException {
-    	List<String> resultList = new ArrayList<String>();
-    	Path hdfsPath = new Path(inputPath);
-    	FileStatus[] fsArray = fs.globStatus(hdfsPath);
-    	
-    	for(int i = 0; i < fsArray.length; i++) {
-    		resultList.add(fsArray[i].getPath().toString());
+        List<String> resultList = new ArrayList<String>();
+        Path hdfsPath = new Path(inputPath);
+        FileStatus[] fsArray = fs.globStatus(hdfsPath);
+
+        for (int i = 0; i < fsArray.length; i++) {
+            resultList.add(fsArray[i].getPath().toString());
         }
-    	    	
-    	return StringUtils.join(resultList, ",");
+
+        return StringUtils.join(resultList, ",");
     }
-    
+
     public void compact(String inputPath, String outputPath, String outputSerialization, int splitCount) {
         // Defining Spark Context with a generic Spark Configuration.
         SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
+
+        if (outputSerialization.toLowerCase().equals(TEXT)) {
+            JavaRDD<String> textFile = sc.textFile(inputPath);
+            textFile.coalesce(splitCount).saveAsTextFile(outputPath);
+        } else if (outputSerialization.toLowerCase().equals(PARQUET)) {
+            SQLContext sqlContext = new SQLContext(sc);
+            Dataset parquetFile = sqlContext.read().parquet(inputPath);
+            parquetFile.coalesce(splitCount).write().parquet(outputPath);
+        } else if (outputSerialization.toLowerCase().equals(AVRO)) {
+            // For this to work the files must end in .avro
+            SQLContext sqlContext = new SQLContext(sc);
+            Dataset avroFile = sqlContext.read().format("com.databricks.spark.avro").load(inputPath);
+            avroFile.coalesce(splitCount).write().format("com.databricks.spark.avro").save(outputPath);
+        } else {
+            System.out.println("Did not match any serialization type, text, parquet, or avro.  Recieved: " +
+                    outputSerialization.toLowerCase());
+        }
+    }
+
+    public void interactive_compact(JavaSparkContext sc, String inputPath, String outputPath, String outputSerialization, String inputCompression, String inputSerialization, String outputCompression, FileSystem fs) throws IOException {
+
+        int splitCount = splitSize(fs, outputPath, inputSize(fs, inputPath, inputCompression, inputSerialization), splitRatio(outputCompression, outputSerialization));
 
         if (outputSerialization.toLowerCase().equals(TEXT)) {
             JavaRDD<String> textFile = sc.textFile(inputPath);
@@ -168,13 +192,13 @@ public class Compact {
         conf.addResource(new Path("file:///etc/hadoop/conf/core-site.xml"));
         conf.addResource(new Path("file:///etc/hadoop/conf/hdfs-site.xml"));
         FileSystem fs = FileSystem.get(conf);
-        
+
         // Defining Compact variable to process this compaction logic.
-        Compact splits = new Compact();        
+        Compact splits = new Compact();
         CommandLine line = splits.parseCli(args);
         line = splits.validateCompressionAndSerializationOptions(line);
 
-        if(null != line) {
+        if (null != line) {
             splits.outputCompressionProperties(line.getOptionValue(OUTPUT_COMPRESSION));
             splits.compact(splits.makeInputPath(fs, line.getOptionValue(INPUT_PATH)),
                     line.getOptionValue(OUTPUT_PATH),
@@ -189,7 +213,7 @@ public class Compact {
 
     private String makeKey(String serializationType, String compressionType) {
         String result;
-        if(null == compressionType) {
+        if (null == compressionType) {
             result = serializationType + "_";
         } else {
             result = serializationType + "_" + compressionType;
@@ -256,23 +280,23 @@ public class Compact {
     private CommandLine validateCompressionAndSerializationOptions(CommandLine line) {
         String errorMsg = null;
         String is = line.getOptionValue(INPUT_SERIALIZATION);
-        if(!is.equals(AVRO) && !is.equals(PARQUET) && !is.equals(TEXT)) {
+        if (!is.equals(AVRO) && !is.equals(PARQUET) && !is.equals(TEXT)) {
             errorMsg = "Invalid input serialization format specified!";
         }
         String os = line.getOptionValue(OUTPUT_SERIALIZATION);
-        if(null == errorMsg && !os.equals(AVRO) && !os.equals(PARQUET) && !os.equals(TEXT)) {
+        if (null == errorMsg && !os.equals(AVRO) && !os.equals(PARQUET) && !os.equals(TEXT)) {
             errorMsg = "Invalid output serialization format specified!";
         }
         String ic = line.getOptionValue(INPUT_COMPRESSION);
-        if(null == errorMsg && !ic.equals(BZ2) && !ic.equals(GZIP) && !ic.equals(LZO) && !ic.equals(NONE)  && !ic.equals(SNAPPY)) {
+        if (null == errorMsg && !ic.equals(BZ2) && !ic.equals(GZIP) && !ic.equals(LZO) && !ic.equals(NONE) && !ic.equals(SNAPPY)) {
             errorMsg = "Invalid input compression format specified!";
         }
         String oc = line.getOptionValue(OUTPUT_COMPRESSION);
-        if(null == errorMsg && !oc.equals(BZ2) && !oc.equals(GZIP) && !oc.equals(LZO) && !oc.equals(NONE)  && !oc.equals(SNAPPY)) {
+        if (null == errorMsg && !oc.equals(BZ2) && !oc.equals(GZIP) && !oc.equals(LZO) && !oc.equals(NONE) && !oc.equals(SNAPPY)) {
             errorMsg = "Invalid output compression format specified!";
         }
         CommandLine result = null;
-        if(null != errorMsg) {
+        if (null != errorMsg) {
             printHelp(errorMsg);
         } else {
             result = line;
