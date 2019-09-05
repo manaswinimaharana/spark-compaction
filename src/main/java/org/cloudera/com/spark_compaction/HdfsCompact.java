@@ -195,13 +195,9 @@ public class HdfsCompact {
         }
     }
 
-    public void compact(String[] args) throws IOException {
+    public void compact(String[] args, JavaSparkContext sc) throws IOException {
         this.setCompressionAndSerializationOptions(this.parseCli(args));
         this.outputCompressionProperties(this.outputCompression);
-
-        // Defining Spark Context with a generic Spark Configuration.
-        SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         if (this.outputSerialization.equals(TEXT)) {
             JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
@@ -223,12 +219,11 @@ public class HdfsCompact {
     }
 
     public static void main(String[] args) throws IOException {
-        // Defining Compact variable to process this compaction logic and parse the CLI arguments.
         HdfsCompact splits = new HdfsCompact();
-        // Example of calling the CLI.
-        splits.compact(args);
-        // Example of using the API with input and output directories passed.
-//        splits.compact("hdfs:///landing/compaction/input", "hdfs:///landing/compaction/output_text_none");
+        SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
+        splits.compact(args,sc);
+
     }
 
     private String makeKey(String serializationType, String compressionType) {
