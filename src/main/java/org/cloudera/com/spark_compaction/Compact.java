@@ -80,6 +80,44 @@ public class Compact {
         compression_ratios.put(makeKey(TEXT, SNAPPY), TEXT_RATIO * SNAPPY_RATIO);
     }
 
+    public static void main(String[] args) throws IOException {
+        // Defining HDFS Configuration and File System definition.
+        Configuration conf = new Configuration();
+        conf.addResource(new Path("file:///etc/hadoop/conf/core-site.xml"));
+        conf.addResource(new Path("file:///etc/hadoop/conf/hdfs-site.xml"));
+        FileSystem fs = FileSystem.get(conf);
+
+        // Defining Compact variable to process this compaction logic.
+        Compact splits = new Compact();
+
+
+
+        SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
+
+        splits.compact_args(sc,fs,args);
+
+
+       /* splits.compact(sc,
+                splits.makeInputPath(fs, line.getOptionValue(INPUT_PATH)),
+                line.getOptionValue(OUTPUT_PATH),
+                line.getOptionValue(OUTPUT_SERIALIZATION),
+                line.getOptionValue(INPUT_COMPRESSION),
+                line.getOptionValue(INPUT_SERIALIZATION),
+                line.getOptionValue(OUTPUT_COMPRESSION),
+                fs);*/
+/*
+            splits.compact(splits.makeInputPath(fs, line.getOptionValue(INPUT_PATH)),
+                    line.getOptionValue(OUTPUT_PATH),
+                    line.getOptionValue(OUTPUT_SERIALIZATION),
+                    splits.splitSize(fs, line.getOptionValue(OUTPUT_PATH), splits.inputSize(fs,
+                            line.getOptionValue(INPUT_PATH), line.getOptionValue(INPUT_COMPRESSION),
+                            line.getOptionValue(INPUT_SERIALIZATION)),
+                            splits.splitRatio(line.getOptionValue(OUTPUT_COMPRESSION),
+                                    line.getOptionValue(OUTPUT_SERIALIZATION))));
+*/
+    }
+
     public void outputCompressionProperties(String outputCompression) {
         if (outputCompression.toLowerCase().equals(NONE)) {
             System.setProperty(SHOULD_COMPRESS_OUTPUT, "false");
@@ -141,7 +179,7 @@ public class Compact {
         return StringUtils.join(resultList, ",");
     }
 
-    public void compact(String inputPath, String outputPath, String outputSerialization, int splitCount) {
+    public void compact_old(String inputPath, String outputPath, String outputSerialization, int splitCount) {
         // Defining Spark Context with a generic Spark Configuration.
         SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -164,7 +202,8 @@ public class Compact {
         }
     }
 
-    public void interactive_compact(JavaSparkContext sc, String inputPath, String outputPath, String outputSerialization, String inputCompression, String inputSerialization, String outputCompression, FileSystem fs) throws IOException {
+    public void compact(JavaSparkContext sc, String inputPath, String outputPath, String outputSerialization,
+                        String inputCompression, String inputSerialization, String outputCompression, FileSystem fs) throws IOException {
 
         int splitCount = splitSize(fs, outputPath, inputSize(fs, inputPath, inputCompression, inputSerialization), splitRatio(outputCompression, outputSerialization));
 
@@ -186,28 +225,38 @@ public class Compact {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        // Defining HDFS Configuration and File System definition.
-        Configuration conf = new Configuration();
-        conf.addResource(new Path("file:///etc/hadoop/conf/core-site.xml"));
-        conf.addResource(new Path("file:///etc/hadoop/conf/hdfs-site.xml"));
-        FileSystem fs = FileSystem.get(conf);
 
-        // Defining Compact variable to process this compaction logic.
-        Compact splits = new Compact();
-        CommandLine line = splits.parseCli(args);
-        line = splits.validateCompressionAndSerializationOptions(line);
+    public void compact_args(JavaSparkContext sc,  FileSystem fs, String[] args) throws IOException {
 
-        if (null != line) {
-            splits.outputCompressionProperties(line.getOptionValue(OUTPUT_COMPRESSION));
-            splits.compact(splits.makeInputPath(fs, line.getOptionValue(INPUT_PATH)),
-                    line.getOptionValue(OUTPUT_PATH),
-                    line.getOptionValue(OUTPUT_SERIALIZATION),
-                    splits.splitSize(fs, line.getOptionValue(OUTPUT_PATH), splits.inputSize(fs,
-                            line.getOptionValue(INPUT_PATH), line.getOptionValue(INPUT_COMPRESSION),
-                            line.getOptionValue(INPUT_SERIALIZATION)),
-                            splits.splitRatio(line.getOptionValue(OUTPUT_COMPRESSION),
-                                    line.getOptionValue(OUTPUT_SERIALIZATION))));
+        CommandLine line = parseCli(args);
+        line = validateCompressionAndSerializationOptions(line);
+
+        String inputPath=line.getOptionValue(INPUT_PATH);
+        String outputPath=line.getOptionValue(OUTPUT_PATH);
+        String outputSerialization=line.getOptionValue(OUTPUT_SERIALIZATION);
+        String inputCompression=line.getOptionValue(INPUT_COMPRESSION);
+        String inputSerialization=line.getOptionValue(INPUT_SERIALIZATION);
+        String outputCompression=line.getOptionValue(OUTPUT_COMPRESSION);
+
+        outputCompressionProperties(outputCompression);
+
+        int splitCount = splitSize(fs, outputPath, inputSize(fs, inputPath, inputCompression, inputSerialization), splitRatio(outputCompression, outputSerialization));
+
+        if (outputSerialization.toLowerCase().equals(TEXT)) {
+            JavaRDD<String> textFile = sc.textFile(inputPath);
+            textFile.coalesce(splitCount).saveAsTextFile(outputPath);
+        } else if (outputSerialization.toLowerCase().equals(PARQUET)) {
+            SQLContext sqlContext = new SQLContext(sc);
+            Dataset parquetFile = sqlContext.read().parquet(inputPath);
+            parquetFile.coalesce(splitCount).write().parquet(outputPath);
+        } else if (outputSerialization.toLowerCase().equals(AVRO)) {
+            // For this to work the files must end in .avro
+            SQLContext sqlContext = new SQLContext(sc);
+            Dataset avroFile = sqlContext.read().format("com.databricks.spark.avro").load(inputPath);
+            avroFile.coalesce(splitCount).write().format("com.databricks.spark.avro").save(outputPath);
+        } else {
+            System.out.println("Did not match any serialization type, text, parquet, or avro.  Recieved: " +
+                    outputSerialization.toLowerCase());
         }
     }
 
