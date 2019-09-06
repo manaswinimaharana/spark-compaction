@@ -19,9 +19,13 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SQLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class HdfsCompact {
 
+    private static final Logger LOG = LoggerFactory.getLogger("spark.Compaction");
     private static Configuration conf = new Configuration();
     private static CompressionCodecFactory codecFactory = null;
     FileSystem fs = null;
@@ -49,6 +53,7 @@ public class HdfsCompact {
     private static final String INPUT_SERIALIZATION = "input-serialization";
     private static final String OUTPUT_COMPRESSION = "output-compression";
     private static final String OUTPUT_SERIALIZATION = "output-serialization";
+    private static final String PARTITION_MECHANISM = "partition-mechanism";
 
     private static final double SNAPPY_RATIO = 1.7;     // (100 / 1.7) = 58.8 ~ 40% compression rate on text
     private static final double LZO_RATIO = 2.0;        // (100 / 2.0) = 50.0 ~ 50% compression rate on text
@@ -77,15 +82,14 @@ public class HdfsCompact {
     private double inputCompressionRatio;
     private double outputCompressionRatio;
     private Path inputCompressionPath;
+    private String partitionMechanism;
 
 
     public HdfsCompact() {
         // Defining HDFS Configuration and File System definition.
         conf.addResource(new Path("file:///etc/hadoop/conf/core-site.xml"));
         conf.addResource(new Path("file:///etc/hadoop/conf/hdfs-site.xml"));
-
         codecFactory = new CompressionCodecFactory(conf);
-
         this.setInputPathSize(0);
         this.setInputCompression(NONE);
         this.setInputSerialization(TEXT);
@@ -157,38 +161,45 @@ public class HdfsCompact {
             System.setProperty(SPARK_AVRO_COMPRESSION_CODEC, BZ2);      //This will throw an error when Avro + BZ2 is set b/c BZ2 is not supported in the upstream package.
             System.setProperty(AVRO_COMPRESSION_CODEC, BZ2);
         }
-//        } else if (outputCompression.toLowerCase().equals(LZO)) {
-//            System.setProperty(SHOULD_COMPRESS_OUTPUT, TRUE);
-//            System.setProperty(OUTPUT_COMPRESSION_CODEC, "com.hadoop.compression.lzo.LzoCodec");
-//            System.setProperty(COMPRESSION_TYPE, BLOCK);
-//            System.setProperty(SPARK_PARQUET_COMPRESSION_CODEC, LZO);
-//            System.setProperty(SPARK_AVRO_COMPRESSION_CODEC, LZO);
-//            System.setProperty(AVRO_COMPRESSION_CODEC, LZO);
-//        }
     }
 
     public void compact(String inputPath, String outputPath) throws IOException {
         this.setCompressionAndSerializationOptions(inputPath, outputPath);
         this.outputCompressionProperties(this.outputCompression);
 
-        // Defining Spark Context with a generic Spark Configuration.
         SparkConf sparkConf = new SparkConf().setAppName("Spark Compaction");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         if (this.outputSerialization.equals(TEXT)) {
             JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
-            textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
+            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
+            }
+            else {
+                textFile.repartition(this.splitSize).saveAsTextFile(outputPath);
+            }
         } else if (this.outputSerialization.equals(PARQUET)) {
             SQLContext sqlContext = new SQLContext(sc);
             Dataset parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
-            parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
+            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
+            }
+            else
+            {
+                parquetFile.repartition(this.splitSize).write().parquet(outputPath);
+            }
         } else if (this.outputSerialization.equals(AVRO)) {
             // For this to work the files must end in .avro
             // Another issue is that when using compression the compression codec extension is not being added to the file name.
             SQLContext sqlContext = new SQLContext(sc);
             Dataset avroFile =
                     sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
-            avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+            }
+            else {
+                avroFile.repartition(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+            }
         } else {
             System.out.println("Did not match any serialization type: text, parquet, or avro.  Recieved: " +
                     this.outputSerialization);
@@ -196,26 +207,50 @@ public class HdfsCompact {
     }
 
     public void compact(String[] args, JavaSparkContext sc) throws IOException {
+
         this.setCompressionAndSerializationOptions(this.parseCli(args));
         this.outputCompressionProperties(this.outputCompression);
-
+        LOG.info("Starting compaction on input file path: ",this.concatInputPath(inputPath));
         if (this.outputSerialization.equals(TEXT)) {
+
             JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
+
+            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                LOG.info("Compating using Coalesce");
             textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
+            }
+            else {
+                LOG.info("Compacting using Repartition ");
+                textFile.repartition(this.splitSize).saveAsTextFile(outputPath);
+            }
+
         } else if (this.outputSerialization.equals(PARQUET)) {
             SQLContext sqlContext = new SQLContext(sc);
             Dataset parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
-            parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
+
+            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
+            }
+            else
+            {
+                parquetFile.repartition(this.splitSize).write().parquet(outputPath);
+            }
         } else if (this.outputSerialization.equals(AVRO)) {
             // For this to work the files must end in .avro
             SQLContext sqlContext = new SQLContext(sc);
             Dataset avroFile =
                     sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
-            avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+            }
+            else {
+                avroFile.repartition(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+            }
         } else {
             System.out.println("Did not match any serialization type: text, parquet, or avro.  Recieved: " +
                     this.outputSerialization);
         }
+        LOG.info("Successfully compacted ",this.concatInputPath(inputPath));
     }
 
     public static void main(String[] args) throws IOException {
@@ -281,6 +316,11 @@ public class HdfsCompact {
                 "The compression used on the files generated by the compaction process, (none, snappy, gzip, bzip2), (required : false)");
         option.setRequired(false);
         options.addOption(option);
+
+        option = new Option("pm", PARTITION_MECHANISM, true,
+                "The partition mechanism to use: repartition or coalesce (required : false)");
+        option.setRequired(false);
+        options.addOption(option);
     }
 
     private void printHelp(String additionalMessage) {
@@ -304,6 +344,7 @@ public class HdfsCompact {
         this.setInputPath(line.getOptionValue(INPUT_PATH));
         this.setOutputPath(line.getOptionValue(OUTPUT_PATH));
         this.setOutputBlockSize(this.outputPath);
+        this.setPartitionMechanism(line.getOptionValue(PARTITION_MECHANISM));
 
         return line;
     }
@@ -375,6 +416,14 @@ public class HdfsCompact {
         this.setOutputCompressionRatio(this.outputCompression, this.outputSerialization);
         this.setInputPathSize(this.inputPath);
         this.setSplitSize(this.outputPath);
+    }
+
+    public String getPartitionMechanism() {
+        return partitionMechanism;
+    }
+
+    public void setPartitionMechanism(String partitionMechanism) {
+        this.partitionMechanism = partitionMechanism.toLowerCase();
     }
 
     public long getInputPathSize() {
