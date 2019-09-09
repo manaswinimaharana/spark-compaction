@@ -133,7 +133,7 @@ $ hdfs dfs -du -h /landing/compaction/partition/output_2016-01-01/* | wc -l
 
 **Wildcard for Multiple Sub Directory Compaction**
 ```vim
-spark-submit \
+spark2-submit \
   --class com.github.KeithSSmith.spark_compaction.Compact \
   --master local[2] \
   ~/cloudera/jars/spark-compaction-0.0.1-SNAPSHOT.jar \
@@ -149,6 +149,7 @@ spark-submit \
 - Add Data Quality checks
 - Add logging 
 - Add additional validations, try-catch-exceptions
+- Build a bash wrapper
 
 
 ### TL;DR
