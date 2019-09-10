@@ -50,7 +50,7 @@ It should also be noted that if Avro is used as the output serialization only un
 
 Spark-Submit
 ```vim
-spark-submit \
+spark2-submit \
   --class org.cloudera.com.spark_compaction.HdfsCompact \
   --master local[2] \
   ${JAR_PATH}/spark-compaction-0.0.1-SNAPSHOT.jar \
@@ -59,7 +59,8 @@ spark-submit \
   --input-compression [none snappy gzip bz2 lzo] \
   --input-serialization [text parquet avro] \
   --output-compression [none snappy gzip bz2 lzo] \
-  --output-serialization [text parquet avro]
+  --output-serialization [text parquet avro] \
+  --partition-mechanism [repartition coalesce]
 ```
 
 PySpark Shell 
