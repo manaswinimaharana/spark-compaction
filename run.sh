@@ -1,5 +1,15 @@
 #!/bin/bash
 uid=`uuidgen`
+appName=${9}
+
+# Example
+# bash run.sh /tmp/spark-compaction-0.0.1-SNAPSHOT.jar /tmp/compression_input/ /tmp/output17 none text none text repartition testApp
+
+
+echo "The log is directed to /tmp/${appName}_${uid}.out"
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
+exec 1> /tmp/${appName}_${uid}.out 2>&1
 
 jarPath=${1}
 ip=${2}
@@ -9,6 +19,12 @@ is=${5}
 oc=${6}
 os=${7}
 pm=${8}
+appName=${9}
+
+echo "-----Application Name-Uid::: ${appName}-${uid} --------"
+echo "Input File Path:: " ${ip}
+echo "Temp Output File Path:: " ${op}
+
 
 if ! `hdfs dfs -test -e ${ip}`;
  then
@@ -61,9 +77,36 @@ fi
 echo "Validation Completed Successfully!!!"
 
 `hdfs dfs -mkdir -p /tmp/bck${ip}`
+
+if [ $? -ne 0 ]; then
+  echo "Creation of HDFS temp directory /tmp/bck${ip} failed!!"
+  exit 1
+fi  
+
 `hdfs dfs -mv ${ip}/* /tmp/bck${ip}`
+
+if [ $? -ne 0 ]; then
+  echo "Moving ${ip} to /tmp/bck${ip} failed!!"
+  exit 1
+fi
+
 `hdfs dfs -mv ${op}/* ${ip}`
+if [ $? -ne 0 ]; then
+  echo "Moving ${op} to ${ip} failed!!"
+  exit 1
+fi
+
 `hdfs dfs -rm -r /tmp/bck/${ip}`
+if [ $? -ne 0 ]; then
+  echo "Removing /tmp/bck${ip} failed!!"
+  exit 1
+fi
+
+`hdfs dfs -rm -r ${op}`
+if [ $? -ne 0 ]; then
+  echo "Removing ${op}  failed!!"
+  exit 1
+fi
   
 after_filecount=`hdfs dfs -count ${ip} | awk '{print $2}'`
 
