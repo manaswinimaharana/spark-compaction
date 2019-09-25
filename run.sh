@@ -80,7 +80,7 @@ opSize=`hdfs dfs -du -s -h ${op} | tail -1 | awk '{print $1}'`
 
 echo "Output file size::" ${opSize} 
 
-if [ "${ic}" == "${oc}" ]  && [ "${ipSize}" == "${opSize}" ] ; 
+if [ "${ic}" == "${oc}" ]  && [ "${ipSize}" != "${opSize}" ] ; 
  then
  echo "Validatation failed !! compaction is aborted for ${ip}"
  exit 1
