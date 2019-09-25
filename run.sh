@@ -1,9 +1,12 @@
+[systest@nightly516-1 ~]$ cat run.sh 
 #!/bin/bash
 uid=`uuidgen`
 appName=${9}
 
 # Example
 # bash run.sh /tmp/spark-compaction-0.0.1-SNAPSHOT.jar /tmp/compression_input/ /tmp/output17 none text none text repartition testApp
+
+#bash run.sh /tmp/spark-compaction-0.0.1-SNAPSHOT.jar /user/hive/warehouse/customers/ /user/hive/warehouse/customers_compaction/ none parquet snappy parquet repartition customers
 
 
 echo "The log is directed to /tmp/${appName}_${uid}.out"
@@ -24,7 +27,11 @@ appName=${9}
 echo "-----Application Name-Uid::: ${appName}-${uid} --------"
 echo "Input File Path:: " ${ip}
 echo "Temp Output File Path:: " ${op}
-
+echo "Input Compression:: " ${ic}
+echo "Input Serialization:: " ${is}
+echo "Output Compression:: " ${oc}
+echo "Output Serialization:: " ${os}
+echo "Partition Mechanism:: " ${pm}
 
 if ! `hdfs dfs -test -e ${ip}`;
  then
@@ -64,11 +71,16 @@ spark2-submit \
   --output-serialization ${os} \
   --partition-mechanism ${pm}
 
+if [ $? -ne 0 ]; then
+  echo "Spark job failed /tmp/bck${ip} failed!!"
+  exit 1
+fi
+
 opSize=`hdfs dfs -du -s -h ${op} | tail -1 | awk '{print $1}'`  
 
 echo "Output file size::" ${opSize} 
 
-if [ "${ipSize}" -ne "${opSize}" ]; 
+if [ "${ic}" == "${oc}" ]  && [ "${ipSize}" == "${opSize}" ] ; 
  then
  echo "Validatation failed !! compaction is aborted for ${ip}"
  exit 1
