@@ -1,17 +1,17 @@
 #!/bin/bash
 uid=`uuidgen`
 appName=${9}
-
+logFile=/tmp/${appName}_${uid}.out
 # Example
 # bash run.sh /tmp/spark-compaction-0.0.1-SNAPSHOT.jar /tmp/compression_input/ /tmp/output17 none text none text repartition testApp
 
 #bash run.sh /tmp/spark-compaction-0.0.1-SNAPSHOT.jar /user/hive/warehouse/customers/ /user/hive/warehouse/customers_compaction/ none parquet snappy parquet repartition customers
 
 
-echo "The log is directed to /tmp/${appName}_${uid}.out"
+echo "The log is directed to ${logFile}"
 exec 3>&1 4>&2
 trap 'exec 2>&4 1>&3' 0 1 2 3
-exec 1> /tmp/${appName}_${uid}.out 2>&1
+exec 1> ${logFile} 2>&1
 
 jarPath=${1}
 ip=${2}
