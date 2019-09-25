@@ -1,4 +1,3 @@
-[systest@nightly516-1 ~]$ cat run.sh 
 #!/bin/bash
 uid=`uuidgen`
 appName=${9}
@@ -80,7 +79,7 @@ opSize=`hdfs dfs -du -s -h ${op} | tail -1 | awk '{print $1}'`
 
 echo "Output file size::" ${opSize} 
 
-if [ "${ic}" == "${oc}" ]  && [ "${ipSize}" != "${opSize}" ] ; 
+if [ "${os}" != "parquet" ] && [ "${ic}" == "${oc}" ]  && [ "${ipSize}" != "${opSize}" ] ; 
  then
  echo "Validatation failed !! compaction is aborted for ${ip}"
  exit 1
@@ -114,7 +113,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-`hdfs dfs -rm -r ${op}`
+trap "`hdfs dfs -rm -r ${op}`" EXIT
 if [ $? -ne 0 ]; then
   echo "Removing ${op}  failed!!"
   exit 1

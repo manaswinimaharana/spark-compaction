@@ -163,7 +163,7 @@ public class HdfsCompact {
         }
     }
 
-    public void compact(String inputPath, String outputPath) throws IOException {
+   /* public void compact(String inputPath, String outputPath) throws IOException {
         this.setCompressionAndSerializationOptions(inputPath, outputPath);
         this.outputCompressionProperties(this.outputCompression);
 
@@ -204,12 +204,15 @@ public class HdfsCompact {
             System.out.println("Did not match any serialization type: text, parquet, or avro.  Recieved: " +
                     this.outputSerialization);
         }
-    }
+    }  */
 
     public void compact(String[] args, JavaSparkContext sc) throws IOException {
 
         this.setCompressionAndSerializationOptions(this.parseCli(args));
         this.outputCompressionProperties(this.outputCompression);
+
+
+
         LOG.info("Starting compaction on input file path: ",this.concatInputPath(inputPath));
         if (this.outputSerialization.equals(TEXT)) {
 
@@ -226,6 +229,9 @@ public class HdfsCompact {
 
         } else if (this.outputSerialization.equals(PARQUET)) {
             SQLContext sqlContext = new SQLContext(sc);
+            if (this.outputCompression.equals(NONE)) {
+                sqlContext.setConf(SPARK_PARQUET_COMPRESSION_CODEC,"uncompressed");
+            }
             Dataset parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
 
             if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
