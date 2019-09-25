@@ -28,6 +28,14 @@ if `hdfs dfs -test -e ${op}`;
     exit 1
 fi
 
+prevFilecount=`hdfs dfs -count ${ip} | awk '{print $2}'`
+
+echo "File count before compaction::" ${prevFilecount}
+
+ipSize=`hdfs dfs -du -s -h ${ip} | tail -1 | awk '{print $1}'`
+
+echo "Input file size::" ${ipSize}
+
 spark2-submit \
   --class org.cloudera.com.spark_compaction.HdfsCompact \
   --master local[2] \
@@ -40,8 +48,9 @@ spark2-submit \
   --output-serialization ${os} \
   --partition-mechanism ${pm}
 
-ipSize=`hdfs dfs -du -s -h ${ip} | tail -1 | awk '{print $1}'`
 opSize=`hdfs dfs -du -s -h ${op} | tail -1 | awk '{print $1}'`  
+
+echo "Output file size::" ${opSize} 
 
 if [ "${ipSize}" -ne "${opSize}" ]; 
  then
@@ -55,3 +64,7 @@ echo "Validation Completed Successfully!!!"
 `hdfs dfs -mv ${ip}/* /tmp/bck${ip}`
 `hdfs dfs -mv ${op}/* ${ip}`
 `hdfs dfs -rm -r /tmp/bck/${ip}`
+  
+after_filecount=`hdfs dfs -count ${ip} | awk '{print $2}'`
+
+echo "File count after compaction::" ${after_filecount}
