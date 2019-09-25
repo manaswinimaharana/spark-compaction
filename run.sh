@@ -22,7 +22,7 @@ if ! `hdfs dfs -test -d ${ip}`;
     exit 1
 fi
 
-if ! `hdfs dfs -test -s ${op}`;
+if `hdfs dfs -test -e ${op}`;
  then
     echo "${op} directory already exists"
     exit 1
@@ -39,3 +39,19 @@ spark2-submit \
   --output-compression ${oc} \
   --output-serialization ${os} \
   --partition-mechanism ${pm}
+
+ipSize=`hdfs dfs -du -s -h ${ip} | tail -1 | awk '{print $1}'`
+opSize=`hdfs dfs -du -s -h ${op} | tail -1 | awk '{print $1}'`  
+
+if [ "${ipSize}" -ne "${opSize}" ]; 
+ then
+ echo "Validatation failed !! compaction is aborted for ${ip}"
+ exit 1
+fi 
+
+echo "Validation Completed Successfully!!!"
+
+`hdfs dfs -mkdir -p /tmp/bck${ip}`
+`hdfs dfs -mv ${ip}/* /tmp/bck${ip}`
+`hdfs dfs -mv ${op}/* ${ip}`
+`hdfs dfs -rm -r /tmp/bck/${ip}`
