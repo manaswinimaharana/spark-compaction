@@ -21,6 +21,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SQLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.spark.sql.*;
 
 
 public class HdfsCompact {

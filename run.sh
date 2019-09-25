@@ -59,8 +59,11 @@ ipSize=`hdfs dfs -du -s -h ${ip} | tail -1 | awk '{print $1}'`
 echo "Input file size::" ${ipSize}
 
 spark2-submit \
+  --packages com.databricks:spark-avro_2.11:4.0.0 \
+  --conf spark.hadoop.avro.mapred.ignore.inputs.without.extension=false \
   --class org.cloudera.com.spark_compaction.HdfsCompact \
-  --master local[2] \
+  --master yarn \
+  --deploy-mode client \
   ${jarPath} \
   --input-path ${ip} \
   --output-path ${op} \
@@ -79,13 +82,13 @@ opSize=`hdfs dfs -du -s -h ${op} | tail -1 | awk '{print $1}'`
 
 echo "Output file size::" ${opSize} 
 
-if [ "${os}" != "parquet" ] && [ "${ic}" == "${oc}" ]  && [ "${ipSize}" != "${opSize}" ] ; 
- then
- echo "Validatation failed !! compaction is aborted for ${ip}"
- exit 1
-fi 
+#if [ "${os}" != "parquet" ] && [ "${ic}" == "${oc}" ]  && [ "${ipSize}" != "${opSize}" ] ; 
+# then
+# echo "Validatation failed !! compaction is aborted for ${ip}"
+# exit 1
+#fi 
 
-echo "Validation Completed Successfully!!!"
+#echo "Validation Completed Successfully!!!"
 
 `hdfs dfs -mkdir -p /tmp/bck${ip}`
 
