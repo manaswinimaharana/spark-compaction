@@ -297,11 +297,11 @@ public class HdfsCompact {
                         this.outputSerialization);
             }
 
-            Path successPath = new Path(outputPath + "/_SUCCESS");
+        //    Path successPath = new Path(outputPath + "/_SUCCESS");
 
-            if (fs.exists(successPath)) {
-                fs.delete(successPath, true);
-            }
+          //  if (fs.exists(successPath)) {
+           //     fs.delete(successPath, true);
+            //}
 
             LOG.info("Successfully compacted ", this.concatInputPath(inputPath));
         }
