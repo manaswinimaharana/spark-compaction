@@ -209,7 +209,7 @@ public class HdfsCompact {
         }
     }  */
    public void validate(Long afterCount, Long beforeCount) throws IOException {
-       if (afterCount != beforeCount) {
+       if (! afterCount.equals(beforeCount)) {
            LOG.info("------------------------------------------------------------------------------------");
            LOG.info("beforeCount:: {} ",beforeCount);
            LOG.info("afterCount:: {}",afterCount);
@@ -226,82 +226,90 @@ public class HdfsCompact {
    }
 
     public void compact(String[] args, JavaSparkContext sc) throws IOException {
-
-        this.setCompressionAndSerializationOptions(this.parseCli(args));
-        this.outputCompressionProperties(this.outputCompression);
+        try {
 
 
+            this.setCompressionAndSerializationOptions(this.parseCli(args));
+            this.outputCompressionProperties(this.outputCompression);
 
-        LOG.info("Starting compaction on input file path: ",this.concatInputPath(inputPath));
-        if (this.outputSerialization.equals(TEXT)) {
+            //FileStatus[] fileStatus =
+            //   FileSystem.get(sc.hadoopConfiguration()).listStatus(new Path(this.concatInputPath(inputPath)));
 
-            JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
-            Long beforeCount = textFile.count();
+            LOG.info("Starting compaction on input file path: ", this.concatInputPath(inputPath));
+            if (this.outputSerialization.equals(TEXT)) {
 
-            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
-                LOG.info("Compating using Coalesce");
-            textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
+                JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
+                Long beforeCount = textFile.count();
+
+                if (getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                    LOG.info("Compating using Coalesce");
+                    textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
+                } else {
+                    LOG.info("Compacting using Repartition ");
+                    textFile.repartition(this.splitSize).saveAsTextFile(outputPath);
+                }
+                JavaRDD<String> outputFile = sc.textFile(outputPath);
+                Long afterCount = outputFile.count();
+
+                validate(beforeCount, afterCount);
+
+
+            } else if (this.outputSerialization.equals(PARQUET)) {
+                SQLContext sqlContext = new SQLContext(sc);
+                if (this.outputCompression.equals(NONE)) {
+                    sqlContext.setConf(SPARK_PARQUET_COMPRESSION_CODEC, "uncompressed");
+                }
+                Dataset parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
+
+                Long beforeCount = parquetFile.count();
+
+                if (getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                    parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
+                } else {
+                    parquetFile.repartition(this.splitSize).write().parquet(outputPath);
+                }
+                Dataset outputPrqFile = sqlContext.read().parquet(outputPath);
+                Long afterCount = outputPrqFile.count();
+
+                validate(beforeCount, afterCount);
+
+            } else if (this.outputSerialization.equals(AVRO)) {
+                // For this to work the files must end in .avro
+                SQLContext sqlContext = new SQLContext(sc);
+                Dataset avroFile =
+                        sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
+
+                Long beforeCount = avroFile.count();
+
+                if (getPartitionMechanism().equalsIgnoreCase("coalesce")) {
+                    avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+                } else {
+                    avroFile.repartition(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
+                }
+                Dataset outputAvroFile =
+                        sqlContext.read().format("com.databricks.spark.avro").load(outputPath);
+                Long afterCount = outputAvroFile.count();
+
+                validate(beforeCount, afterCount);
+
+            } else {
+                System.out.println("Did not match any serialization type: text, parquet, or avro.  Recieved: " +
+                        this.outputSerialization);
             }
-            else {
-                LOG.info("Compacting using Repartition ");
-                textFile.repartition(this.splitSize).saveAsTextFile(outputPath);
+
+            Path successPath = new Path(outputPath + "/_SUCCESS");
+
+            if (fs.exists(successPath)) {
+                fs.delete(successPath, true);
             }
-            JavaRDD<String> outputFile = sc.textFile(outputPath);
-            Long afterCount = outputFile.count();
 
-            validate(beforeCount,afterCount);
-
-
-
-        } else if (this.outputSerialization.equals(PARQUET)) {
-            SQLContext sqlContext = new SQLContext(sc);
-            if (this.outputCompression.equals(NONE)) {
-                sqlContext.setConf(SPARK_PARQUET_COMPRESSION_CODEC,"uncompressed");
-            }
-            Dataset parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
-
-            Long beforeCount = parquetFile.count();
-
-            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
-                parquetFile.coalesce(this.splitSize).write().parquet(outputPath);
-            }
-            else
-            {
-                parquetFile.repartition(this.splitSize).write().parquet(outputPath);
-            }
-            Dataset outputPrqFile = sqlContext.read().parquet(outputPath);
-            Long afterCount = outputPrqFile.count();
-
-            validate(beforeCount,afterCount);
-
-        } else if (this.outputSerialization.equals(AVRO)) {
-            // For this to work the files must end in .avro
-            SQLContext sqlContext = new SQLContext(sc);
-            Dataset avroFile =
-                            sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
-
-            Long beforeCount = avroFile.count();
-
-            if(getPartitionMechanism().equalsIgnoreCase("coalesce")) {
-                avroFile.coalesce(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
-            }
-            else {
-                avroFile.repartition(this.splitSize).write().format("com.databricks.spark.avro").save(outputPath);
-            }
-            Dataset outputAvroFile =
-                    sqlContext.read().format("com.databricks.spark.avro").load(outputPath);
-            Long afterCount = outputAvroFile.count();
-
-            validate(beforeCount,afterCount);
-
-        } else {
-            System.out.println("Did not match any serialization type: text, parquet, or avro.  Recieved: " +
-                    this.outputSerialization);
+            LOG.info("Successfully compacted ", this.concatInputPath(inputPath));
         }
-
-
-
-        LOG.info("Successfully compacted ",this.concatInputPath(inputPath));
+        catch(Exception e){
+            LOG.info(" Compaction Failed for {}", this.concatInputPath(inputPath));
+            LOG.info(" Exception {}",e);
+            System.exit(1);
+        }
     }
 
     public static void main(String[] args) throws IOException {
