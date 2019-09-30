@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="a44011ec-cefb-4dde-ade1-cb054e3c297a" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spark-compaction.iml" beforeDir="false" afterPath="$PROJECT_DIR$/spark-compaction.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/HdfsCompact.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/HdfsCompact.java" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/classes/" />
+    <ignored path="$PROJECT_DIR$/target/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DefaultGradleProjectSettings">
+    <option name="isMigrated" value="true" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/HdfsCompact.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="254">
+              <caret line="300" selection-start-line="300" selection-end-line="300" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#23626#23627#0" expanded="true" />
+                <element signature="e#23378#23379#0" expanded="true" />
+                <element signature="e#23419#23420#0" expanded="true" />
+                <element signature="e#23464#23465#0" expanded="true" />
+                <element signature="e#23533#23534#0" expanded="true" />
+                <element signature="e#24040#24041#0" expanded="true" />
+                <element signature="e#24138#24139#0" expanded="true" />
+                <element signature="e#25344#25345#0" expanded="true" />
+                <element signature="e#25433#25434#0" expanded="true" />
+                <element signature="e#26198#26199#0" expanded="true" />
+                <element signature="e#26647#26648#0" expanded="true" />
+                <element signature="e#27076#27077#0" expanded="true" />
+                <element signature="e#27423#27424#0" expanded="true" />
+                <element signature="e#28387#28388#0" expanded="true" />
+                <element signature="e#28625#28626#0" expanded="true" />
+                <element signature="e#29480#29481#0" expanded="true" />
+                <element signature="e#29576#29577#0" expanded="true" />
+                <element signature="e#29660#29661#0" expanded="true" />
+                <element signature="e#29886#29887#0" expanded="true" />
+                <element signature="e#30120#30121#0" expanded="true" />
+                <element signature="e#30400#30401#0" expanded="true" />
+                <element signature="e#30480#30481#0" expanded="true" />
+                <element signature="e#30596#30597#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/run.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="506">
+              <caret line="75" column="24" lean-forward="true" selection-start-line="75" selection-start-column="24" selection-end-line="75" selection-end-column="24" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pom.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="243">
+              <caret line="62" column="24" selection-start-line="62" selection-start-column="24" selection-end-line="62" selection-end-column="38" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/README.md">
+          <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+            <state split_layout="SPLIT">
+              <first_editor relative-caret-position="352">
+                <caret line="62" column="27" selection-start-line="62" selection-start-column="27" selection-end-line="62" selection-end-column="27" />
+              </first_editor>
+              <second_editor />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>compact</find>
+      <find>initializeOptions</find>
+      <find>compact_args</find>
+      <find>parseCli</find>
+      <find>inputSize</find>
+      <find>INPUT_COMPRESSION</find>
+      <find>FileSy</find>
+      <find>block</find>
+      <find>fs</find>
+      <find>concatInputPath</find>
+      <find>snappy</find>
+      <find>SHOULD_COMPRESS_OUTPUT</find>
+      <find>outputCompressionProperties</find>
+      <find>OUTPUT_COMPRESSION_CODEC</find>
+      <find>SPARK_PARQUET_COMPRESSION_CODEC</find>
+      <find>avro</find>
+      <find>PARTITION_MECHANISM</find>
+      <find>partitionMechanism</find>
+      <find>setPart</find>
+      <find>parse</find>
+      <find>setCompressionAndSerializationOptions</find>
+      <find>setParti</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/Compact.java" />
+        <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/HdfsCompact.java" />
+        <option value="$PROJECT_DIR$/run.sh" />
+      </list>
+    </option>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="importAutomatically" value="true" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="MavenProjectNavigator">
+    <treeState>
+      <expand />
+      <select />
+    </treeState>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="34" />
+    <option name="y" value="23" />
+    <option name="width" value="1367" />
+    <option name="height" value="819" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="PackagesPane" />
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="spark-compaction" type="b2602c69:ProjectViewProjectNode" />
+              <item name="spark-compaction" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="org.cloudera.com.spark_compaction" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a44011ec-cefb-4dde-ade1-cb054e3c297a" name="Default Changelist" comment="" />
+      <created>1567629341521</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1567629341521</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="34" y="23" width="1367" height="819" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2535849" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info id="Image Layers" order="2" />
+      <window_info id="Designer" order="3" />
+      <window_info id="UI Designer" order="4" />
+      <window_info id="Capture Tool" order="5" />
+      <window_info id="Favorites" order="6" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" weight="0.3287483" />
+      <window_info anchor="bottom" id="Terminal" order="7" weight="0.3287483" />
+      <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" weight="0.3287483" />
+      <window_info anchor="bottom" id="Version Control" order="9" />
+      <window_info anchor="bottom" id="Messages" order="10" weight="0.3287483" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Palette" order="3" />
+      <window_info anchor="right" id="Maven" order="4" weight="0.32981133" />
+      <window_info anchor="right" id="Theme Preview" order="5" />
+      <window_info anchor="right" id="Capture Analysis" order="6" />
+      <window_info anchor="right" id="Palette&#9;" order="7" />
+    </layout>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.2/commons-cli-1.2.jar!/org/apache/commons/cli/CommandLine.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="37" column="24" lean-forward="true" selection-start-line="37" selection-start-column="24" selection-end-line="37" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/Compact.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3566">
+          <caret line="14" column="37" selection-start-line="14" selection-start-column="37" selection-end-line="14" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="243">
+          <caret line="62" column="24" selection-start-line="62" selection-start-column="24" selection-end-line="62" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="352">
+            <caret line="62" column="27" selection-start-line="62" selection-start-column="27" selection-end-line="62" selection-end-column="27" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/cloudera/com/spark_compaction/HdfsCompact.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="254">
+          <caret line="300" selection-start-line="300" selection-end-line="300" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#23626#23627#0" expanded="true" />
+            <element signature="e#23378#23379#0" expanded="true" />
+            <element signature="e#23419#23420#0" expanded="true" />
+            <element signature="e#23464#23465#0" expanded="true" />
+            <element signature="e#23533#23534#0" expanded="true" />
+            <element signature="e#24040#24041#0" expanded="true" />
+            <element signature="e#24138#24139#0" expanded="true" />
+            <element signature="e#25344#25345#0" expanded="true" />
+            <element signature="e#25433#25434#0" expanded="true" />
+            <element signature="e#26198#26199#0" expanded="true" />
+            <element signature="e#26647#26648#0" expanded="true" />
+            <element signature="e#27076#27077#0" expanded="true" />
+            <element signature="e#27423#27424#0" expanded="true" />
+            <element signature="e#28387#28388#0" expanded="true" />
+            <element signature="e#28625#28626#0" expanded="true" />
+            <element signature="e#29480#29481#0" expanded="true" />
+            <element signature="e#29576#29577#0" expanded="true" />
+            <element signature="e#29660#29661#0" expanded="true" />
+            <element signature="e#29886#29887#0" expanded="true" />
+            <element signature="e#30120#30121#0" expanded="true" />
+            <element signature="e#30400#30401#0" expanded="true" />
+            <element signature="e#30480#30481#0" expanded="true" />
+            <element signature="e#30596#30597#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/run.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="506">
+          <caret line="75" column="24" lean-forward="true" selection-start-line="75" selection-start-column="24" selection-end-line="75" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

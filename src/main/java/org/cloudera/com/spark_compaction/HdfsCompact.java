@@ -57,6 +57,7 @@ public class HdfsCompact {
     private static final String OUTPUT_COMPRESSION = "output-compression";
     private static final String OUTPUT_SERIALIZATION = "output-serialization";
     private static final String PARTITION_MECHANISM = "partition-mechanism";
+    private static final String OVERWRITE_FLAG = "overwrite-flag";
 
     private static final double SNAPPY_RATIO = 1.7;     // (100 / 1.7) = 58.8 ~ 40% compression rate on text
     private static final double LZO_RATIO = 2.0;        // (100 / 2.0) = 50.0 ~ 50% compression rate on text
@@ -86,6 +87,7 @@ public class HdfsCompact {
     private double outputCompressionRatio;
     private Path inputCompressionPath;
     private String partitionMechanism;
+    private String overwriteFlag;
 
 
     public HdfsCompact() {
@@ -242,7 +244,7 @@ public class HdfsCompact {
                 Long beforeCount = textFile.count();
 
                 if (getPartitionMechanism().equalsIgnoreCase("coalesce")) {
-                    LOG.info("Compating using Coalesce");
+                    LOG.info("Compacting using Coalesce");
                     textFile.coalesce(this.splitSize).saveAsTextFile(outputPath);
                 } else {
                     LOG.info("Compacting using Repartition ");
@@ -297,12 +299,19 @@ public class HdfsCompact {
                         this.outputSerialization);
             }
 
-        //    Path successPath = new Path(outputPath + "/_SUCCESS");
+            if (getOverwriteFlag().equalsIgnoreCase("true")){
+                Path iPath = new Path(inputPath);
+                Path oPath = new Path(outputPath);
+                Path tPath= new Path(iPath.getParent() + "/_" + iPath.getName() + "_COMPACTION_TEMP");
+                LOG.info("The Temporary Path is::{}", tPath);
 
-          //  if (fs.exists(successPath)) {
-           //     fs.delete(successPath, true);
-            //}
+                if (fs.exists(iPath) && fs.exists(oPath)) {
+                    fs.rename(iPath,tPath);
+                    fs.rename(oPath,iPath);
+                    fs.delete(tPath, true);
+                }
 
+            }
             LOG.info("Successfully compacted ", this.concatInputPath(inputPath));
         }
         catch(Exception e){
@@ -380,6 +389,11 @@ public class HdfsCompact {
                 "The partition mechanism to use: repartition or coalesce (required : false)");
         option.setRequired(false);
         options.addOption(option);
+
+        option = new Option("of", OVERWRITE_FLAG, true,
+                "Should the source directory be overwritten? (required : false)");
+        option.setRequired(false);
+        options.addOption(option);
     }
 
     private void printHelp(String additionalMessage) {
@@ -404,6 +418,7 @@ public class HdfsCompact {
         this.setOutputPath(line.getOptionValue(OUTPUT_PATH));
         this.setOutputBlockSize(this.outputPath);
         this.setPartitionMechanism(line.getOptionValue(PARTITION_MECHANISM));
+        this.setOverwriteFlag(line.getOptionValue(OVERWRITE_FLAG));
 
         return line;
     }
@@ -483,6 +498,14 @@ public class HdfsCompact {
 
     public void setPartitionMechanism(String partitionMechanism) {
         this.partitionMechanism = partitionMechanism.toLowerCase();
+    }
+
+    public String getOverwriteFlag() {
+        return overwriteFlag;
+    }
+
+    public void setOverwriteFlag(String overwriteFlag) {
+        this.overwriteFlag = overwriteFlag.toLowerCase();
     }
 
     public long getInputPathSize() {

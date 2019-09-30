@@ -1,6 +1,6 @@
 #!/bin/bash
 uid=`uuidgen`
-appName=${9}
+appName=${10}
 logFile=/tmp/${appName}_${uid}.out
 # Example
 # bash run.sh /tmp/spark-compaction-0.0.1-SNAPSHOT.jar /tmp/compression_input/ /tmp/output17 none text none text repartition testApp
@@ -21,7 +21,7 @@ is=${5}
 oc=${6}
 os=${7}
 pm=${8}
-appName=${9}
+of=${9}
 
 echo "-----Application Name-Uid::: ${appName}-${uid} --------"
 echo "Input File Path:: " ${ip}
@@ -31,6 +31,7 @@ echo "Input Serialization:: " ${is}
 echo "Output Compression:: " ${oc}
 echo "Output Serialization:: " ${os}
 echo "Partition Mechanism:: " ${pm}
+echo "Override Flag:: " ${of}
 
 if ! `hdfs dfs -test -e ${ip}`;
  then
@@ -71,7 +72,8 @@ spark2-submit \
   --input-serialization ${is} \
   --output-compression ${oc} \
   --output-serialization ${os} \
-  --partition-mechanism ${pm}
+  --partition-mechanism ${pm} \
+  --overwrite-flag ${of}
 
 if [ $? -ne 0 ]; then
   echo "Spark job failed /tmp/bck${ip} failed!!"
