@@ -60,9 +60,30 @@ spark2-submit \
   --input-serialization [text parquet avro] \
   --output-compression [none snappy gzip bz2 lzo] \
   --output-serialization [text parquet avro] \
-  --partition-mechanism [repartition coalesce]
+  --partition-mechanism [repartition coalesce] \
+  --overwrite-flag [true false
 ```
 
+Example 
+
+```spark2-submit \
+  --packages com.databricks:spark-avro_2.11:4.0.0 \
+  --conf spark.hadoop.avro.mapred.ignore.inputs.without.extension=false \
+  --class org.cloudera.com.spark_compaction.HdfsCompact \
+  --master yarn \
+  --deploy-mode client \
+  /tmp/spark-compaction-0.0.1-SNAPSHOT.jar \
+  --input-path /user/hive/warehouse/customers \
+  --output-path /user/hive/warehouse/customers_compacted5 \
+  --input-compression none \
+  --input-serialization parquet \
+  --output-compression none \
+  --output-serialization parquet \
+  --partition-mechanism repartition \
+  --overwrite-flag false
+  ```
+  
+  
 PySpark Shell 
 
 ```vim 
