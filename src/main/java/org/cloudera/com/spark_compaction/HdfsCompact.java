@@ -258,9 +258,17 @@ public class HdfsCompact {
 
             } else if (this.outputSerialization.equals(PARQUET)) {
                 SQLContext sqlContext = new SQLContext(sc);
+
                 if (this.outputCompression.equals(NONE)) {
                     sqlContext.setConf(SPARK_PARQUET_COMPRESSION_CODEC, "uncompressed");
                 }
+                else if(this.outputCompression.equals(SNAPPY)) {
+                    sqlContext.setConf(SPARK_PARQUET_COMPRESSION_CODEC, SNAPPY);
+                }
+                else if(this.outputCompression.equals(GZIP)) {
+                    sqlContext.setConf(SPARK_PARQUET_COMPRESSION_CODEC, GZIP);
+                }
+
                 Dataset parquetFile = sqlContext.read().parquet(this.concatInputPath(inputPath));
 
                 Long beforeCount = parquetFile.count();
@@ -278,6 +286,19 @@ public class HdfsCompact {
             } else if (this.outputSerialization.equals(AVRO)) {
                 // For this to work the files must end in .avro
                 SQLContext sqlContext = new SQLContext(sc);
+                if (this.outputCompression.equals(NONE)) {
+                    sqlContext.setConf(SHOULD_COMPRESS_OUTPUT, "false");
+
+                }
+                else if(this.outputCompression.equals(SNAPPY)) {
+                    sqlContext.setConf(SPARK_AVRO_COMPRESSION_CODEC, SNAPPY);
+                    sqlContext.setConf(AVRO_COMPRESSION_CODEC, SNAPPY);
+                }
+                else if(this.outputCompression.equals(GZIP)) {
+                    sqlContext.setConf(SPARK_AVRO_COMPRESSION_CODEC, GZIP);
+                    sqlContext.setConf(AVRO_COMPRESSION_CODEC, GZIP);
+                }
+
                 Dataset avroFile =
                         sqlContext.read().format("com.databricks.spark.avro").load(this.concatInputPath(inputPath));
 
