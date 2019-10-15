@@ -1,54 +1,87 @@
 # HDFS Compaction using Apache Spark
-Small files are a common challenge in the Apache Hadoop world and when not handled with care, they can lead to a 
-number of complications. The Apache Hadoop Distributed File System (HDFS) was developed to store and process large 
-data sets over the range of terabytes and petabytes. However, HDFS stores small files inefficiently, leading to 
-inefficient Namenode memory utilization and RPC calls, block scanning throughput degradation, and reduced application
- layer performance. Please visit[https://blog.cloudera.com/small-files-big-foils-addressing-the-associated-metadata-and-application-challenges/] for more info. 
+HDFS is sensitive to the presence of small files. HDFS was developed to store and process large data sets over the range of terabytes and petabytes where data is expected to be stored in larger blocks(> 128MB). Though it may seem very trivial and often overlooked when architecting and deploying Hadoop applications. This often leads to “small files problem” affecting NN scalability , application scalability, and performance. For example - constant need of increasing NN heap, limiting the # of concurrent jobs run datasets with large # of small files etc..
+This is a reusable generic HDFS file compaction tool,coded in java, runs on top of Apache Spark can be leveraged to compact HDFS files in Text, Parquet or Avro format.
 
-This reusable Apache Spark based library was build to address "large # of small HDFS files" issue by compacting them 
-into optimal HDFS block sized files. 
+ Please visit[https://blog.cloudera.com/small-files-big-foils-addressing-the-associated-metadata-and-application-challenges/] for more info. 
+
 
 **Features**
-- Can invoked multiple ways - Stand-alone Spark job, Pyspark shell, Spark-shell, custom spark applications 
-- Dynamically calculates the output file size based on file format, compression and serialization
-- Perform recursive compaction 
-- Easy to use
 
-**Caveats**
+The compaction tool has a few good features which makes it a suitable tool:
+- Supports wide variety of file formats - Avro, Parquet and Text 
+- Supports various file compressions - bzip2, gzip, snappy and None
+- Intelligently calculates the number of output file size to fill the HDFS block efficiently based on the input data, 
+file format and compression
 
-It should also be noted that if Avro is used as the output serialization only uncompressed and snappy compression are supported in the upstream package (spark-avro by Databricks) and the compression type will not be passed as part of the output file name.  The other option that is not supported is Parquet + BZ2 and that will result in an execution error.
-
-**Installation**
-
-1. Setup the development environment 
-
-    1.1.    Clone the git project
-    
-    1.2.    Import the project into IDE e.g. eclipse or intellij
- 
-2. Build and compile
-    
-    2.1. Edit the pom.xml to match the CDH version of cluster 
-    
-    2.2. Re-compile using mvn (you can use IDE or commandline) 
-     ```vim 
-     mvn clean install
-     ```
-    This will build the target jar "spark-compaction-0.0.1-SNAPSHOT.jar" under ~/target dir
-    
-4. Deploy
-    
-    Copy the "spark-compaction-0.0.1-SNAPSHOT.jar" to the cluster.
-    
-    e.g. 
-    ```vim 
-    scp -r target/spark-compaction-0.0.1-SNAPSHOT.jar username@<edgenode-hostname>:/tmp
+    Compression Ratio(assumed) 
+    ```SNAPPY_RATIO = 1.7;  // (100 / 1.7) = 58.8 ~ 40% compression rate on text
+    LZO_RATIO = 2.0;     // (100 / 2.0) = 50.0 ~ 50% compression rate on text
+    GZIP_RATIO = 2.5;    // (100 / 2.5) = 40.0 ~ 60% compression rate on text
+    BZ2_RATIO = 3.33;    // (100 / 3.3) = 30.3 ~ 70% compression rate on text
     ```
-* Note: You can always follow enterprise standards of change control management to build and deploy the jar*
+
+    Serialization Ratio(assumed) 
+    ```AVRO_RATIO = 1.6; // (100 / 1.6) = 62.5 ~ 40% compression rate on text
+    PARQUET_RATIO = 2.0;  // (100 / 2.0) = 50.0 ~ 50% compression rate on text
+    ```
+
+    Number of output files
+    ```Input File Size Inflated = Input Compression Ratio * Input Serialization Ratio * Input File Size 
+    Output File Size = Input File Size Inflated / ( Output Compression Ratio * Output Serialization Ratio ) 
+    Number of Blocks Filled = Output File Size / Block Size of Output Directory
+    Efficient Number of Files to Store = FLOOR( Number of Blocks Filled ) + 1
+    ```
+-   Can be used interactively as well in batch mode
+-   Can employ with repartition or coalesce depending on the need. While repartition guarantees uniform  output file 
+    size can perform poorly for vast amounts of data
+-   Capability to incorporate a simple DQ check such as row count 
+-   Offers a way to overwrite the original data, if needed
+-   Has the ability to perform recursive compaction
+
+
+**Build and Deploy**
+
+*   Setup the development environment
+    *   Software required
+        *   Apache-maven-3.6.1 & above
+        *   Spark 2.0 & above
+        *   Java 1.8 & above      
+
+*   Clone the git project 
+    ```
+        git clone https://github.com/manaswinimaharana/spark-compaction.git
+    ```
+*   [optional] Import the project into IDE e.g. eclipse or Intellij, for making code changes
+
+*   Deploy: Copy the "spark-compaction-0.0.1-SNAPSHOT.jar" to the cluster.e.g.
+    ```
+    scp -r target/spark-compaction-0.0.1-SNAPSHOT.jar username@<edgenode-hostname>:<target-path>
+    ```
+    **Note: You can always integrate it with enterprise standards of change control management to build and deploy the jar** 
+
 
 **Execution Options**
 
-Spark-Submit
+Main Class Name: org.cloudera.com.spark_compaction.HdfsCompact
+
+Input Parameters:
+
+Name  | Description | Values
+------------- | ------------- | -------------
+input-path  | Path of the input hdfs directory to be compacted. Use “*” for compacting it recursively. But be aware when used recursively all the files within will be compacted and placed into a single output directory. e.g. hdfs:///landing/compaction/partition/date=2016-01-01/hour=*  | parameter type: mandatory
+output-path  | Path of the output hdfs directory or temp directory if overwrite flag is set to “true”. e.g. /landing/compaction/partition/output_2016-01-01  | Parameter type: mandatory
+input-compression  | Compression type of the input data  | Parameter type: mandatory, Acceptable values: none, snappy,gzip, bz2, lzo, Default: none
+input-serialization  | Input serialization format or so called file format  | Parameter type: mandatory; Acceptable values: text, parquet, avro; Default: text
+output-compression  | Compression type of the output data  | Parameter type: optional, Acceptable values: none, snappy,gzip, bz2, lzo, Default: none
+output-serialization  | Output serialization format or so called file format  | Parameter type: mandatory; Acceptable values: text, parquet, avro; Default: text
+partition-mechanism  | The partition function to be used  | Acceptable values: coalesce repartition, Default: coalesce
+overwrite-flag  | Flag to determine if the input directory needs to be overwritten  |  Acceptable values: true, false, Default: false
+
+
+Batch Mode
+
+The Jar can be executed using “spark-submit” command 
+
 ```vim
 spark2-submit \
   --class org.cloudera.com.spark_compaction.HdfsCompact \
@@ -61,7 +94,7 @@ spark2-submit \
   --output-compression [none snappy gzip bz2 lzo] \
   --output-serialization [text parquet avro] \
   --partition-mechanism [repartition coalesce] \
-  --overwrite-flag [true false
+  --overwrite-flag [true false]
 ```
 
 Example 
@@ -84,7 +117,7 @@ Example
   ```
   
   
-PySpark Shell 
+Interactive Mode: PySpark Shell 
 
 ```vim 
 $  pyspark2 --jars <path-to-spark-compaction-0.0.1-SNAPSHOT.jar>
@@ -123,7 +156,6 @@ SparkSession available as 'spark'.
 >>> func.compact(args,sc._jsc) 
 
 ```
-
 
 ## Multiple Directory Compaction
 
@@ -167,11 +199,19 @@ spark2-submit \
   --output-serialization text
 ```
 
+### ASSUMPTIONS/CAVEATS
+
+*   It should also be noted that if Avro is used as the output serialization only uncompressed and snappy compression are supported in the upstream package (spark-avro by Databricks) and the compression type will not be passed as part of the output file name. The other option that is not supported is Parquet + BZ2 and that will result in an execution error.
+*   All the files within the directory are of same scheme, files format and compression
+*   Input file format needs to be same as output file format, currently the script does not support cross-format compaction
+
 ### Future road map 
-- Add Data Quality checks
-- Add logging 
-- Add additional validations, try-catch-exceptions
-- Build a bash wrapper
+*   Add efficient logging
+*   Add option to compact multiple directories using Multi-threading in Driver . Currently an external wrapper script is used to circumvent this. 
+*   Add unit test cases
+*   Improve the exception handling 
+*   Incorporate advanced  Data quality checks 
+*   Tune the code to handle large amount of data
 
 
 ### TL;DR
