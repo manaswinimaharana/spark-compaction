@@ -5,7 +5,7 @@ This is a reusable generic HDFS file compaction tool,coded in java, runs on top 
  Please visit[https://blog.cloudera.com/small-files-big-foils-addressing-the-associated-metadata-and-application-challenges/] for more info. 
 
 
-##Features
+## Features
 
 The compaction tool has a few good features which makes it a suitable tool:
 - Supports wide variety of file formats - Avro, Parquet and Text 
@@ -39,7 +39,7 @@ file format and compression
 -   Has the ability to perform recursive compaction
 
 
-##Build and Deploy
+## Build and Deploy
 
 *   Setup the development environment
     *   Software required
@@ -60,7 +60,7 @@ file format and compression
     **Note: You can always integrate it with enterprise standards of change control management to build and deploy the jar** 
 
 
-##Execution
+## Execution
 
 **Main Class Name**: org.cloudera.com.spark_compaction.HdfsCompact
 
