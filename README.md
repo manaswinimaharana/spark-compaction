@@ -5,7 +5,7 @@ This is a reusable generic HDFS file compaction tool,coded in java, runs on top 
  Please visit[https://blog.cloudera.com/small-files-big-foils-addressing-the-associated-metadata-and-application-challenges/] for more info. 
 
 
-**Features**
+##Features
 
 The compaction tool has a few good features which makes it a suitable tool:
 - Supports wide variety of file formats - Avro, Parquet and Text 
@@ -39,7 +39,7 @@ file format and compression
 -   Has the ability to perform recursive compaction
 
 
-**Build and Deploy**
+##Build and Deploy
 
 *   Setup the development environment
     *   Software required
@@ -60,11 +60,11 @@ file format and compression
     **Note: You can always integrate it with enterprise standards of change control management to build and deploy the jar** 
 
 
-**Execution Options**
+##Execution
 
-Main Class Name: org.cloudera.com.spark_compaction.HdfsCompact
+**Main Class Name**: org.cloudera.com.spark_compaction.HdfsCompact
 
-Input Parameters:
+**Input Parameters**
 
 Name  | Description | Values
 ------------- | ------------- | -------------
@@ -78,7 +78,7 @@ partition-mechanism  | The partition function to be used  | Acceptable values: c
 overwrite-flag  | Flag to determine if the input directory needs to be overwritten  |  Acceptable values: true, false, Default: false
 
 
-Batch Mode
+**Batch Mode**
 
 The Jar can be executed using “spark-submit” command 
 
@@ -117,7 +117,7 @@ Example
   ```
   
   
-Interactive Mode: PySpark Shell 
+**Interactive Mode: PySpark Shell**
 
 ```vim 
 $  pyspark2 --jars <path-to-spark-compaction-0.0.1-SNAPSHOT.jar>
@@ -199,13 +199,13 @@ spark2-submit \
   --output-serialization text
 ```
 
-### ASSUMPTIONS/CAVEATS
+## ASSUMPTIONS/CAVEATS
 
 *   It should also be noted that if Avro is used as the output serialization only uncompressed and snappy compression are supported in the upstream package (spark-avro by Databricks) and the compression type will not be passed as part of the output file name. The other option that is not supported is Parquet + BZ2 and that will result in an execution error.
 *   All the files within the directory are of same scheme, files format and compression
 *   Input file format needs to be same as output file format, currently the script does not support cross-format compaction
 
-### Future road map 
+## Future road map 
 *   Add efficient logging
 *   Add option to compact multiple directories using Multi-threading in Driver . Currently an external wrapper script is used to circumvent this. 
 *   Add unit test cases
