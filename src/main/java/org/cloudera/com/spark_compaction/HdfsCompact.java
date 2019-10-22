@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.spark.sql.*;
 import scala.math.BigInt;
-
+import org.apache.spark.storage.StorageLevel;
 
 public class HdfsCompact {
 
@@ -241,7 +241,10 @@ public class HdfsCompact {
             if (this.outputSerialization.equals(TEXT)) {
 
                 JavaRDD<String> textFile = sc.textFile(this.concatInputPath(inputPath));
+                textFile.persist(StorageLevel.MEMORY_AND_DISK_SER());
                 Long beforeCount = textFile.count();
+
+
 
                 if (getPartitionMechanism().equalsIgnoreCase("coalesce")) {
                     LOG.info("Compacting using Coalesce");
